@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>移动端浏览器首页（优化图标兼容性）</title>
+<style>
+/* 样式保持不变 */
+body { margin:0; font-family:Arial; background:#1e1e1e; color:white; text-align:center; overflow-y:auto; -webkit-user-select:none; user-select:none; }
+.search { 
+  margin:15px auto; 
+  width:92%; 
+  max-width:600px; 
+  display:flex; 
+  gap:5px; 
+  flex-wrap:wrap; 
+  flex-direction: column; /* 改为列布局，使搜索行和按钮行分开 */
+}
+.search-row {
+  display:flex;
+  gap:5px;
+  width:100%;
+}
+.action-row {
+  display:flex;
+  gap:5px;
+  width:100%;
+  justify-content: center; /* 居中显示按钮 */
+  margin-top: 5px; /* 与搜索行保持间距 */
+}
+.search input { flex:1; padding:10px; border-radius:6px; border:none; font-size:14px; }
+.search select { border-radius:6px; border:none; font-size:12px; padding:0 5px; }
+.search button { border:none; border-radius:6px; padding:8px; cursor:pointer; font-size:12px; }
+.search-btn { background:#4a6fa5; color:white; }
+.reset-btn { background:#5a5a5a; color:white; }
+.export-btn { background:#3a7a5a; color:white; }
+.category-header { 
+  width:95%; 
+  margin:6px auto 4px;
+  display:flex; 
+  align-items:center; 
+  justify-content:space-between; 
+  background:#2a2a2a; 
+  padding:3px 8px;
+  border-radius:5px;
+  cursor:pointer; 
+  min-height:20px;
+  height:20px;
+  font-size:11px;
+}
+.category-title { 
+  font-size:11px;
+  font-weight:bold; 
+  display:flex; 
+  align-items:center; 
+  gap:3px;
+}
+.category-actions { 
+  display:flex; 
+  gap:2px;
+  opacity:0.7; 
+  transition:opacity 0.2s; 
+}
+.category-header:hover .category-actions { opacity:1; }
+.category-btn { 
+  background:#3a3a3a; 
+  border:none; 
+  color:white; 
+  padding:1px 4px;
+  border-radius:2px;
+  cursor:pointer; 
+  font-size:9px;
+  line-height:1; 
+}
+.category-btn:hover { background:#4a4a4a; }
+.toggle-icon { 
+  font-size:10px;
+  width:10px;
+  height:10px;
+  display:inline-block; 
+  transition:transform 0.3s; 
+}
+.sites-grid { 
+  width:95%; 
+  margin:auto; 
+  display:grid; 
+  grid-template-columns:repeat(5, 1fr); 
+  gap:12px; 
+  padding:4px 0 10px;
+  transition:all 0.3s; 
+}
+.sites-grid.collapsed { display:none; }
+.site { 
+  cursor:pointer; 
+  touch-action:none; 
+  position:relative; 
+  width:100%; 
+}
+.icon { 
+  width:48px; 
+  height:48px; 
+  margin:auto; 
+  background:#2c2c2c; 
+  border-radius:10px; 
+  display:flex; 
+  align-items:center; 
+  justify-content:center; 
+  overflow:hidden; 
+}
+.icon img { 
+  width:40px; 
+  height:40px; 
+  object-fit:contain; 
+  border-radius:6px; 
+  transition:transform 0.2s; 
+}
+.site:hover .icon img { transform:scale(1.05); }
+.name { 
+  font-size:11px; 
+  margin-top:3px; 
+  word-break:break-all; 
+  text-align:center; 
+  line-height:1.2; 
+}
+.add { font-size:30px; }
+.add-category { 
+  width:95%; 
+  margin:10px auto 4px;
+  background:#2a2a2a; 
+  padding:4px 8px;
+  border-radius:5px;
+  cursor:pointer; 
+  text-align:center; 
+  font-size:11px;
+  color:#aaa; 
+  min-height:20px;
+  display:flex; 
+  align-items:center; 
+  justify-content:center; 
+}
+.add-category:hover { background:#3a3a3a; }
+.dragging { opacity:0.5; transform:scale(1.1); z-index:100; }
+.drop-target { background:#3a5a7a; }
+.dialog { 
+  position:fixed; 
+  top:0; 
+  left:0; 
+  right:0; 
+  bottom:0; 
+  background:rgba(0,0,0,0.6); 
+  display:none; 
+  align-items:center; 
+  justify-content:center; 
+  z-index:1000; 
+}
+.box { 
+  background:#2c2c2c; 
+  padding:15px; 
+  border-radius:8px; 
+  width:240px; 
+}
+.box input, .box select { 
+  width:100%; 
+  margin-top:4px; 
+  padding:6px; 
+  margin-bottom:8px; 
+  font-size:12px; 
+}
+.box button { 
+  margin-top:6px; 
+  padding:6px; 
+  width:60px; 
+  margin-right:4px; 
+  font-size:12px; 
+}
+.category-dialog .box { width:280px; }
+.manage-categories { 
+  margin-top:4px;
+  text-align:center; 
+  margin-bottom:12px;
+}
+.manage-categories button { 
+  width:auto; 
+  padding:4px 8px;
+  background:#3a3a3a; 
+  border:none; 
+  color:white; 
+  border-radius:4px; 
+  cursor:pointer; 
+  font-size:10px;
+}
+.import-btn { 
+  background:#5a5a5a; 
+  color:white; 
+  border:none; 
+  border-radius:6px; 
+  padding:8px; 
+  cursor:pointer; 
+  font-size:12px; 
+}
+.file-input { display:none; }
+</style>
+<script>
+// 默认只保留一个分类，命名为"常用网站"
+const defaultCategories = [
+  {
+    id: 1,
+    name: "常用网站",
+    expanded: true,
+    sites: [
+      { name: "Google", url: "https://google.com" },
+      { name: "百度", url: "https://baidu.com" },
+      { name: "GitHub", url: "https://github.com" },
+      { name: "ChatGPT", url: "https://chat.openai.com" },
+      { name: "YouTube", url: "https://youtube.com" },
+      { name: "Gmail", url: "https://gmail.com" },
+      { name: "淘宝", url: "https://taobao.com" },
+      { name: "微博", url: "https://weibo.com" }
+    ]
+  }
+];
+
+// 初始化数据
+let categories = JSON.parse(localStorage.getItem("categories"));
+if (!categories || categories.length === 0) {
+  categories = JSON.parse(JSON.stringify(defaultCategories));
+  saveCategories();
+}
+
+let editSiteIndex = null;
+let editSiteCategoryId = null;
+let draggingSite = null;
+let draggingCategory = null;
+let nextCategoryId = Math.max(...categories.map(c => c.id), 0) + 1;
+let dragEnabled = true; // 拖拽启用标志
+
+// 保存分类数据
+function saveCategories() {
+  localStorage.setItem("categories", JSON.stringify(categories));
+}
+
+// 渲染整个页面
+function render() {
+  const container = document.getElementById("container");
+  container.innerHTML = "";
+  
+  // 渲染所有分类
+  categories.forEach(category => {
+    // 分类标题栏
+    const header = document.createElement("div");
+    header.className = "category-header";
+    header.dataset.categoryId = category.id;
+    
+    header.innerHTML = `
+      <div class="category-title">
+        <span class="toggle-icon">${category.expanded ? "▼" : "▶"}</span>
+        ${category.name} (${category.sites.length})
+      </div>
+      <div class="category-actions">
+        <button class="category-btn" onclick="event.stopPropagation(); renameCategory(${category.id})">重命名</button>
+        <button class="category-btn" onclick="event.stopPropagation(); deleteCategory(${category.id})">删除</button>
+      </div>
+    `;
+    
+    // 分类点击折叠/展开
+    header.onclick = (e) => {
+      if (!e.target.classList.contains("category-btn")) {
+        toggleCategory(category.id);
+      }
+    };
+    
+    container.appendChild(header);
+    
+    // 分类下的网站容器
+    const sitesGrid = document.createElement("div");
+    sitesGrid.className = `sites-grid ${category.expanded ? "" : "collapsed"}`;
+    sitesGrid.dataset.categoryId = category.id;
+    sitesGrid.id = `category-grid-${category.id}`;
+    
+    // 渲染该分类下的所有网站
+    category.sites.forEach((site, siteIndex) => {
+      const siteDiv = createSiteElement(site, siteIndex, category.id);
+      sitesGrid.appendChild(siteDiv);
+    });
+    
+    // 添加网站按钮
+    const addSite = document.createElement("div");
+    addSite.className = "site";
+    addSite.innerHTML = `<div class="icon add">+</div><div class="name">添加网站</div>`;
+    addSite.onclick = () => {
+      editSiteIndex = null;
+      editSiteCategoryId = category.id;
+      openSiteEdit();
+    };
+    sitesGrid.appendChild(addSite);
+    
+    container.appendChild(sitesGrid);
+  });
+  
+  // 添加分类按钮
+  const addCategoryBtn = document.createElement("div");
+  addCategoryBtn.className = "add-category";
+  addCategoryBtn.innerHTML = "+ 添加新分类";
+  addCategoryBtn.onclick = openCategoryEdit;
+  container.appendChild(addCategoryBtn);
+  
+  // 管理分类按钮
+  if (categories.length > 1) {
+    const manageBtn = document.createElement("div");
+    manageBtn.className = "manage-categories";
+    manageBtn.innerHTML = `<button onclick="openManageCategories()">管理分类排序</button>`;
+    container.appendChild(manageBtn);
+  }
+}
+
+// 获取域名
+function getDomain(url) {
+  try {
+    return new URL(url).hostname.replace('www.', '');
+  } catch (e) {
+    return url.replace('https://', '').replace('http://', '').replace('www.', '').split('/')[0];
+  }
+}
+
+// 创建网站元素
+function createSiteElement(site, siteIndex, categoryId) {
+  const div = document.createElement("div");
+  div.className = "site";
+  div.dataset.siteIndex = siteIndex;
+  div.dataset.categoryId = categoryId;
+  div.draggable = false; // 禁用默认拖拽
+  
+  // 获取网站favicon - 优化版本
+  const domain = getDomain(site.url);
+  
+  // 创建图标容器
+  const iconDiv = document.createElement("div");
+  iconDiv.className = "icon";
+  
+  // 创建图片元素
+  const img = document.createElement("img");
+  img.alt = site.name;
+  img.loading = "lazy"; // 延迟加载优化
+  
+  // 尝试多种favicon源，按优先级排序
+  const faviconSources = [
+    // 1. 主源：Google Favicon服务（国际通用）
+    `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
+    
+    // 2. 备选源1：DuckDuckGo Favicon服务（国内可访问性较好）
+    `https://icons.duckduckgo.com/ip3/${domain}.ico`,
+    
+    // 3. 备选源2：Favicon Kit（国内可访问）
+    `https://api.faviconkit.com/${domain}/64`,
+    
+    // 4. 备选源3：网站自带的favicon.ico
+    `https://${domain}/favicon.ico`,
+    
+    // 5. 备选源4：http协议的网站favicon
+    `http://${domain}/favicon.ico`,
+    
+    // 6. 备选源5：Yandex Favicon服务
+    `https://favicon.yandex.net/favicon/${domain}`,
+    
+    // 7. 备选源6：Clearbit Logo服务（需要API key，此处不使用）
+  ];
+  
+  // 生成SVG占位符
+  function createSvgFallback() {
+    const firstChar = site.name.charAt(0).toUpperCase();
+    return `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iNiIgZmlsbD0iIzNjM2MzNiIvPjx0ZXh0IHg9IjIwIiB5PSIyNSIgZm9udC1mYW1pbHk9IkFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj4${btoa(firstChar)}</dGV4dD48L3N2Zz4=`;
+  }
+  
+  // 当前尝试的源索引
+  let currentSourceIndex = 0;
+  
+  // 尝试加载下一个源
+  function tryNextSource() {
+    if (currentSourceIndex < faviconSources.length) {
+      img.src = faviconSources[currentSourceIndex];
+      currentSourceIndex++;
+    } else {
+      // 所有源都失败，使用SVG回退
+      img.src = createSvgFallback();
+    }
+  }
+  
+  // 设置图片加载失败的处理
+  img.onerror = function() {
+    // 尝试下一个源
+    setTimeout(tryNextSource, 0);
+  };
+  
+  // 设置图片加载成功的处理
+  img.onload = function() {
+    // 图片加载成功，不做任何处理
+  };
+  
+  // 开始尝试第一个源
+  img.src = faviconSources[0];
+  currentSourceIndex = 1;
+  
+  // 添加到图标容器
+  iconDiv.appendChild(img);
+  
+  // 创建网站名称
+  const nameDiv = document.createElement("div");
+  nameDiv.className = "name";
+  nameDiv.textContent = site.name;
+  
+  // 组装元素
+  div.appendChild(iconDiv);
+  div.appendChild(nameDiv);
+  
+  // 长按/触摸事件 - 优化版
+  let longPressTimer = null;
+  let isDragging = false;
+  let isEditing = false;
+  let dragStartX = 0;
+  let dragStartY = 0;
+  let touchIdentifier = null;
+  const EDIT_DELAY = 1000; // 编辑延迟改为1秒（从1.5秒缩短）
+  const DRAG_THRESHOLD = 10; // 拖动阈值10px
+  
+  // 检测设备类型 - 用于兼容性处理
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  
+  // 鼠标事件兼容性处理
+  let mouseDownTime = 0;
+  let isMouseDown = false;
+  let mouseDownX = 0;
+  let mouseDownY = 0;
+  let mouseMoveHandler = null;
+  let mouseUpHandler = null;
+  
+  // 触摸开始
+  div.addEventListener('touchstart', (e) => {
+    if (!dragEnabled) return;
+    
+    const touch = e.touches[0];
+    touchIdentifier = touch.identifier;
+    dragStartX = touch.clientX;
+    dragStartY = touch.clientY;
+    isDragging = false;
+    isEditing = false;
+    
+    // 设置长按计时器 - 1秒后触发编辑
+    longPressTimer = setTimeout(() => {
+      // 1秒内没有拖动，触发编辑功能
+      if (!isDragging) {
+        isEditing = true;
+        editSiteIndex = siteIndex;
+        editSiteCategoryId = categoryId;
+        openSiteEdit();
+      }
+    }, EDIT_DELAY);
+    
+    e.preventDefault();
+  }, { passive: false });
+  
+  // 触摸移动
+  div.addEventListener('touchmove', (e) => {
+    if (!dragEnabled) return;
+    
+    const touch = Array.from(e.touches).find(t => t.identifier === touchIdentifier);
+    if (!touch) return;
+    
+    const moveX = Math.abs(touch.clientX - dragStartX);
+    const moveY = Math.abs(touch.clientY - dragStartY);
+    
+    // 如果移动距离超过阈值，则视为开始拖动
+    if ((moveX > DRAG_THRESHOLD || moveY > DRAG_THRESHOLD) && !isEditing) {
+      // 清除编辑计时器
+      clearTimeout(longPressTimer);
+      isDragging = true;
+      
+      // 如果尚未开始拖拽，则开始拖拽
+      if (!dragElement) {
+        startDrag(siteIndex, categoryId, div, touch.clientX, touch.clientY, 'touch');
+      } else {
+        // 更新拖拽位置
+        updateDrag(touch.clientX, touch.clientY);
+      }
+    }
+    
+    e.preventDefault();
+  }, { passive: false });
+  
+  // 触摸结束
+  div.addEventListener('touchend', (e) => {
+    clearTimeout(longPressTimer);
+    
+    if (isDragging) {
+      isDragging = false;
+      endDrag();
+    } else if (!isEditing) {
+      // 短按打开网站
+      const touch = e.changedTouches[0];
+      const endX = touch.clientX;
+      const endY = touch.clientY;
+      const moveX = Math.abs(endX - dragStartX);
+      const moveY = Math.abs(endY - dragStartY);
+      
+      if (moveX < 10 && moveY < 10) {
+        window.open(site.url, '_blank');
+      }
+    }
+    
+    // 重置状态
+    isEditing = false;
+    
+    e.preventDefault();
+  }, { passive: false });
+  
+  // 触摸取消
+  div.addEventListener('touchcancel', () => {
+    clearTimeout(longPressTimer);
+    if (isDragging) {
+      isDragging = false;
+      endDrag();
+    }
+    isEditing = false;
+  });
+  
+  // 为电脑鼠标添加兼容性处理
+  // 鼠标按下事件 - 等效于触摸开始
+  div.addEventListener('mousedown', (e) => {
+    if (!dragEnabled || e.button !== 0) return; // 只处理左键点击
+    
+    e.preventDefault();
+    
+    // 记录鼠标按下时间和位置
+    mouseDownTime = Date.now();
+    isMouseDown = true;
+    mouseDownX = e.clientX;
+    mouseDownY = e.clientY;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    isDragging = false;
+    isEditing = false;
+    
+    // 设置长按计时器 - 1秒后触发编辑
+    longPressTimer = setTimeout(() => {
+      // 1秒内没有拖动，触发编辑功能
+      if (!isDragging) {
+        isEditing = true;
+        editSiteIndex = siteIndex;
+        editSiteCategoryId = categoryId;
+        openSiteEdit();
+      }
+    }, EDIT_DELAY);
+    
+    // 为文档添加鼠标移动和抬起事件监听
+    mouseMoveHandler = (moveEvent) => {
+      handleMouseMove(moveEvent, siteIndex, categoryId, div);
+    };
+    
+    mouseUpHandler = (upEvent) => {
+      handleMouseUp(upEvent, siteIndex, categoryId, div);
+    };
+    
+    document.addEventListener('mousemove', mouseMoveHandler);
+    document.addEventListener('mouseup', mouseUpHandler);
+  });
+  
+  // 处理鼠标移动
+  function handleMouseMove(e, siteIndex, categoryId, element) {
+    if (!isMouseDown || !dragEnabled) return;
+    
+    const moveX = Math.abs(e.clientX - dragStartX);
+    const moveY = Math.abs(e.clientY - dragStartY);
+    
+    // 如果移动距离超过阈值，则视为开始拖动
+    if ((moveX > DRAG_THRESHOLD || moveY > DRAG_THRESHOLD) && !isEditing) {
+      // 清除编辑计时器
+      clearTimeout(longPressTimer);
+      isDragging = true;
+      
+      // 如果尚未开始拖拽，则开始拖拽
+      if (!dragElement) {
+        startDrag(siteIndex, categoryId, element, e.clientX, e.clientY, 'mouse');
+      } else {
+        // 更新拖拽位置
+        updateDrag(e.clientX, e.clientY);
+      }
+    }
+  }
+  
+  // 处理鼠标抬起
+  function handleMouseUp(e, siteIndex, categoryId, element) {
+    if (!isMouseDown) return;
+    
+    clearTimeout(longPressTimer);
+    
+    // 移除事件监听
+    document.removeEventListener('mousemove', mouseMoveHandler);
+    document.removeEventListener('mouseup', mouseUpHandler);
+    
+    isMouseDown = false;
+    
+    if (isDragging) {
+      isDragging = false;
+      endDrag();
+    } else if (!isEditing) {
+      // 短按打开网站
+      const moveX = Math.abs(e.clientX - dragStartX);
+      const moveY = Math.abs(e.clientY - dragStartY);
+      
+      if (moveX < 10 && moveY < 10) {
+        window.open(site.url, '_blank');
+      }
+    }
+    
+    // 重置状态
+    isEditing = false;
+  }
+  
+  // 鼠标离开元素
+  div.addEventListener('mouseleave', () => {
+    if (!isMouseDown) return;
+    
+    // 如果鼠标离开元素且没有开始拖动，清除计时器
+    clearTimeout(longPressTimer);
+  });
+  
+  return div;
+}
+
+// 拖拽相关变量
+let dragElement = null;
+let dragGhost = null;
+let dragStartCategoryId = null;
+let dragStartIndex = null;
+let currentDragCategoryId = null;
+let currentDragIndex = null;
+let dropTargetElement = null;
+let dragType = 'touch'; // 记录拖拽类型：'touch' 或 'mouse'
+
+// 开始拖拽
+function startDrag(siteIndex, categoryId, element, startX, startY, type) {
+  if (!dragEnabled) return;
+  
+  dragStartCategoryId = categoryId;
+  dragStartIndex = siteIndex;
+  currentDragCategoryId = categoryId;
+  currentDragIndex = siteIndex;
+  dragElement = element;
+  dragType = type;
+  
+  // 创建拖拽虚影
+  dragGhost = element.cloneNode(true);
+  dragGhost.style.position = 'fixed';
+  dragGhost.style.zIndex = '1000';
+  dragGhost.style.pointerEvents = 'none';
+  dragGhost.style.width = element.offsetWidth + 'px';
+  dragGhost.style.height = element.offsetHeight + 'px';
+  dragGhost.style.top = (startY - element.offsetHeight/2) + 'px';
+  dragGhost.style.left = (startX - element.offsetWidth/2) + 'px';
+  dragGhost.style.opacity = '0.7';
+  document.body.appendChild(dragGhost);
+  
+  // 添加拖拽类
+  element.classList.add('dragging');
+  
+  // 根据拖拽类型添加全局事件监听
+  if (dragType === 'touch') {
+    document.addEventListener('touchmove', handleGlobalTouchMove, { passive: false });
+    document.addEventListener('touchend', handleGlobalTouchEnd, { passive: false });
+  } else {
+    document.addEventListener('mousemove', handleGlobalMouseMove);
+    document.addEventListener('mouseup', handleGlobalMouseUp);
+  }
+}
+
+// 更新拖拽位置
+function updateDrag(x, y) {
+  if (!dragGhost) return;
+  
+  // 更新虚影位置
+  dragGhost.style.top = (y - dragGhost.offsetHeight/2) + 'px';
+  dragGhost.style.left = (x - dragGhost.offsetWidth/2) + 'px';
+  
+  // 查找拖放目标
+  const elements = document.elementsFromPoint(x, y);
+  const targetSite = elements.find(el => el.classList && el.classList.contains('site') && !el.classList.contains('dragging'));
+  
+  // 清除之前的拖放目标样式
+  if (dropTargetElement && dropTargetElement !== targetSite) {
+    dropTargetElement.classList.remove('drop-target');
+  }
+  
+  // 设置新的拖放目标
+  if (targetSite && targetSite.dataset.categoryId && targetSite.dataset.siteIndex !== undefined) {
+    const targetCategoryId = parseInt(targetSite.dataset.categoryId);
+    const targetSiteIndex = parseInt(targetSite.dataset.siteIndex);
+    
+    if (targetCategoryId === currentDragCategoryId && targetSiteIndex !== currentDragIndex) {
+      dropTargetElement = targetSite;
+      dropTargetElement.classList.add('drop-target');
+      
+      // 更新当前拖拽位置
+      currentDragIndex = targetSiteIndex;
+    }
+  } else {
+    dropTargetElement = null;
+  }
+}
+
+// 结束拖拽
+function endDrag() {
+  // 根据拖拽类型移除全局事件监听
+  if (dragType === 'touch') {
+    document.removeEventListener('touchmove', handleGlobalTouchMove);
+    document.removeEventListener('touchend', handleGlobalTouchEnd);
+  } else {
+    document.removeEventListener('mousemove', handleGlobalMouseMove);
+    document.removeEventListener('mouseup', handleGlobalMouseUp);
+  }
+  
+  // 移除拖拽虚影
+  if (dragGhost) {
+    document.body.removeChild(dragGhost);
+    dragGhost = null;
+  }
+  
+  // 移除拖拽样式
+  if (dragElement) {
+    dragElement.classList.remove('dragging');
+  }
+  
+  // 移除拖放目标样式
+  if (dropTargetElement) {
+    dropTargetElement.classList.remove('drop-target');
+  }
+  
+  // 执行实际的排序操作
+  if (dragStartCategoryId === currentDragCategoryId && 
+      dragStartIndex !== currentDragIndex && 
+      currentDragIndex !== null) {
+    
+    const category = categories.find(c => c.id === currentDragCategoryId);
+    if (category && category.sites[dragStartIndex]) {
+      // 执行数组重排
+      const [movedSite] = category.sites.splice(dragStartIndex, 1);
+      category.sites.splice(currentDragIndex, 0, movedSite);
+      saveCategories();
+      render();
+    }
+  }
+  
+  // 重置拖拽状态
+  dragElement = null;
+  dropTargetElement = null;
+  dragStartCategoryId = null;
+  dragStartIndex = null;
+  currentDragCategoryId = null;
+  currentDragIndex = null;
+  dragType = 'touch';
+}
+
+// 全局触摸移动处理
+function handleGlobalTouchMove(e) {
+  if (dragType !== 'touch') return;
+  
+  const touch = e.touches[0];
+  if (touch) {
+    updateDrag(touch.clientX, touch.clientY);
+  }
+  e.preventDefault();
+}
+
+// 全局触摸结束处理
+function handleGlobalTouchEnd(e) {
+  if (dragType !== 'touch') return;
+  
+  endDrag();
+  e.preventDefault();
+}
+
+// 全局鼠标移动处理
+function handleGlobalMouseMove(e) {
+  if (dragType !== 'mouse') return;
+  
+  updateDrag(e.clientX, e.clientY);
+  e.preventDefault();
+}
+
+// 全局鼠标抬起处理
+function handleGlobalMouseUp(e) {
+  if (dragType !== 'mouse') return;
+  
+  endDrag();
+  e.preventDefault();
+}
+
+// 切换分类折叠/展开
+function toggleCategory(categoryId) {
+  const category = categories.find(c => c.id === categoryId);
+  if (category) {
+    category.expanded = !category.expanded;
+    saveCategories();
+    render();
+  }
+}
+
+// 打开网站编辑对话框
+function openSiteEdit() {
+  const dialog = document.getElementById("siteDialog");
+  dialog.style.display = "flex";
+  
+  const categorySelect = document.getElementById("siteCategory");
+  categorySelect.innerHTML = categories.map(category => 
+    `<option value="${category.id}" ${category.id === editSiteCategoryId ? 'selected' : ''}>${category.name}</option>`
+  ).join('');
+  
+  if (editSiteIndex !== null && editSiteCategoryId !== null) {
+    const category = categories.find(c => c.id === editSiteCategoryId);
+    if (category && category.sites[editSiteIndex]) {
+      const site = category.sites[editSiteIndex];
+      document.getElementById("siteName").value = site.name;
+      document.getElementById("siteUrl").value = site.url;
+    }
+  } else {
+    document.getElementById("siteName").value = "";
+    document.getElementById("siteUrl").value = "";
+  }
+}
+
+// 保存网站编辑
+function saveSiteEdit() {
+  const name = document.getElementById("siteName").value.trim();
+  let url = document.getElementById("siteUrl").value.trim();
+  const categoryId = parseInt(document.getElementById("siteCategory").value);
+  
+  if (!name || !url) {
+    alert("请填写网站名称和网址");
+    return;
+  }
+  
+  if (!url.startsWith("http")) {
+    url = "https://" + url;
+  }
+  
+  const category = categories.find(c => c.id === categoryId);
+  if (!category) {
+    alert("分类不存在");
+    return;
+  }
+  
+  if (editSiteIndex !== null && editSiteCategoryId !== null) {
+    if (editSiteCategoryId === categoryId) {
+      category.sites[editSiteIndex] = { name, url };
+    } else {
+      const oldCategory = categories.find(c => c.id === editSiteCategoryId);
+      if (oldCategory) {
+        const [movedSite] = oldCategory.sites.splice(editSiteIndex, 1);
+        movedSite.name = name;
+        movedSite.url = url;
+        category.sites.push(movedSite);
+      }
+    }
+  } else {
+    category.sites.push({ name, url });
+  }
+  
+  saveCategories();
+  closeSiteDialog();
+  render();
+}
+
+// 删除网站
+function deleteSite() {
+  if (editSiteIndex !== null && editSiteCategoryId !== null) {
+    const category = categories.find(c => c.id === editSiteCategoryId);
+    if (category && confirm("确定删除这个网站吗？")) {
+      category.sites.splice(editSiteIndex, 1);
+      saveCategories();
+    }
+  }
+  closeSiteDialog();
+  render();
+}
+
+// 关闭网站对话框
+function closeSiteDialog() {
+  document.getElementById("siteDialog").style.display = "none";
+  editSiteIndex = null;
+  editSiteCategoryId = null;
+}
+
+// 打开分类编辑对话框
+function openCategoryEdit() {
+  const dialog = document.getElementById("categoryDialog");
+  dialog.style.display = "flex";
+  document.getElementById("categoryName").value = "";
+  document.getElementById("categoryDialogTitle").textContent = "添加新分类";
+  document.getElementById("saveCategoryBtn").onclick = addNewCategory;
+}
+
+// 添加新分类
+function addNewCategory() {
+  const name = document.getElementById("categoryName").value.trim();
+  if (!name) {
+    alert("请输入分类名称");
+    return;
+  }
+  
+  categories.push({
+    id: nextCategoryId++,
+    name: name,
+    expanded: true,
+    sites: []
+  });
+  
+  saveCategories();
+  closeCategoryDialog();
+  render();
+}
+
+// 重命名分类
+function renameCategory(categoryId) {
+  const category = categories.find(c => c.id === categoryId);
+  if (!category) return;
+  
+  const dialog = document.getElementById("categoryDialog");
+  dialog.style.display = "flex";
+  document.getElementById("categoryName").value = category.name;
+  document.getElementById("categoryDialogTitle").textContent = "重命名分类";
+  
+  document.getElementById("saveCategoryBtn").onclick = function() {
+    const newName = document.getElementById("categoryName").value.trim();
+    if (!newName) {
+      alert("请输入分类名称");
+      return;
+    }
+    
+    category.name = newName;
+    saveCategories();
+    closeCategoryDialog();
+    render();
+  };
+}
+
+// 删除分类
+function deleteCategory(categoryId) {
+  if (categories.length <= 1) {
+    alert("至少需要保留一个分类");
+    return;
+  }
+  
+  if (confirm("确定删除这个分类吗？分类下的所有网站也将被删除。")) {
+    const index = categories.findIndex(c => c.id === categoryId);
+    if (index !== -1) {
+      categories.splice(index, 1);
+      saveCategories();
+      render();
+    }
+  }
+}
+
+// 打开管理分类对话框
+function openManageCategories() {
+  const dialog = document.getElementById("manageDialog");
+  dialog.style.display = "flex";
+  
+  const list = document.getElementById("categoryList");
+  list.innerHTML = "";
+  
+  categories.forEach((category, index) => {
+    const div = document.createElement("div");
+    div.style.cssText = "margin:6px 0; padding:6px; background:#3a3a3a; border-radius:4px; display:flex; justify-content:space-between; align-items:center; font-size:12px;";
+    
+    div.innerHTML = `
+      <span>${category.name} (${category.sites.length}个网站)</span>
+      <div>
+        <button onclick="moveCategoryUp(${index})" ${index === 0 ? 'disabled' : ''} style="margin-right:3px; font-size:10px; padding:3px 6px;">上移</button>
+        <button onclick="moveCategoryDown(${index})" ${index === categories.length-1 ? 'disabled' : ''} style="font-size:10px; padding:3px 6px;">下移</button>
+      </div>
+    `;
+    
+    list.appendChild(div);
+  });
+}
+
+// 上移分类
+function moveCategoryUp(index) {
+  if (index > 0) {
+    [categories[index], categories[index-1]] = [categories[index-1], categories[index]];
+    saveCategories();
+    openManageCategories();
+  }
+}
+
+// 下移分类
+function moveCategoryDown(index) {
+  if (index < categories.length - 1) {
+    [categories[index], categories[index+1]] = [categories[index+1], categories[index]];
+    saveCategories();
+    openManageCategories();
+  }
+}
+
+// 关闭管理对话框
+function closeManageDialog() {
+  document.getElementById("manageDialog").style.display = "none";
+  render();
+}
+
+// 关闭分类对话框
+function closeCategoryDialog() {
+  document.getElementById("categoryDialog").style.display = "none";
+}
+
+// 搜索功能
+function search() {
+  const kw = document.getElementById("kw").value;
+  const engine = document.getElementById("engine").value;
+  let url = "";
+  if (engine === "google") url = "https://www.google.com/search?q=" + encodeURIComponent(kw);
+  if (engine === "baidu") url = "https://www.baidu.com/s?wd=" + encodeURIComponent(kw);
+  if (engine === "yandex") url = "https://yandex.com/search/?text=" + encodeURIComponent(kw);
+  if (engine === "bing") url = "https://www.bing.com/search?q=" + encodeURIComponent(kw);
+  window.open(url, '_blank');
+}
+
+function enter(e) {
+  if (e.key === "Enter") search();
+}
+
+// 重置为默认
+function resetSites() {
+  if (confirm("确定重置为默认分类和网站吗？当前的所有数据将被清除。")) {
+    categories = JSON.parse(JSON.stringify(defaultCategories));
+    nextCategoryId = Math.max(...categories.map(c => c.id), 0) + 1;
+    saveCategories();
+    render();
+  }
+}
+
+// 导出配置
+function exportSites() {
+  const data = JSON.stringify(categories);
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "categories.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// 导入配置
+function importSites() {
+  const fileInput = document.getElementById("fileInput");
+  fileInput.click();
+}
+
+// 处理文件选择
+function handleFileSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (Array.isArray(imported) && imported.every(c => c.id && c.name && Array.isArray(c.sites))) {
+        categories = imported;
+        nextCategoryId = Math.max(...categories.map(c => c.id), 0) + 1;
+        saveCategories();
+        render();
+        alert("导入成功！");
+      } else {
+        alert("导入失败：文件格式不正确");
+      }
+    } catch (err) {
+      alert("导入失败：" + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+</script>
+</head>
+<body onload="render()">
+<!-- 修改搜索栏布局 -->
+<div class="search">
+  <!-- 第一行：搜索输入、搜索引擎选择、搜索按钮 -->
+  <div class="search-row">
+    <input id="kw" placeholder="搜索..." onkeydown="enter(event)">
+    <select id="engine">
+      <option value="google">Google</option>
+      <option value="baidu">百度</option>
+      <option value="yandex">Yandex</option>
+      <option value="bing">Bing</option>
+    </select>
+    <button onclick="search()" class="search-btn">搜索</button>
+  </div>
+  
+  <!-- 第二行：导出、导入、重置按钮 -->
+  <div class="action-row">
+    <button onclick="exportSites()" class="export-btn">导出</button>
+    <button onclick="importSites()" class="import-btn">导入</button>
+    <button onclick="resetSites()" class="reset-btn">重置</button>
+    <input type="file" id="fileInput" onchange="handleFileSelect(event)" accept=".json" class="file-input">
+  </div>
+</div>
+
+<div id="container"></div>
+
+<!-- 网站编辑对话框 -->
+<div id="siteDialog" class="dialog">
+  <div class="box">
+    <div>网站名称</div>
+    <input id="siteName">
+    <div>网站网址</div>
+    <input id="siteUrl">
+    <div>所属分类</div>
+    <select id="siteCategory"></select>
+    <button onclick="saveSiteEdit()">保存</button>
+    <button onclick="deleteSite()">删除</button>
+    <button onclick="closeSiteDialog()">取消</button>
+  </div>
+</div>
+
+<!-- 分类编辑对话框 -->
+<div id="categoryDialog" class="dialog">
+  <div class="box">
+    <div id="categoryDialogTitle">添加新分类</div>
+    <input id="categoryName" placeholder="输入分类名称">
+    <button id="saveCategoryBtn">保存</button>
+    <button onclick="closeCategoryDialog()">取消</button>
+  </div>
+</div>
+
+<!-- 管理分类对话框 -->
+<div id="manageDialog" class="dialog">
+  <div class="box category-dialog">
+    <div style="font-size:14px; margin-bottom:10px; text-align:center;">管理分类排序</div>
+    <div id="categoryList"></div>
+    <div style="margin-top:12px; text-align:center;">
+      <button onclick="closeManageDialog()">完成</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
