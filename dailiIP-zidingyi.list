@@ -7,3 +7,4 @@
 #IP-CIDR,17.0.0.0/8,no-resolve
 #IP-CIDR,198.183.17.0/24,no-resolve
 
+DOMAIN-SUFFIX,speed.net
