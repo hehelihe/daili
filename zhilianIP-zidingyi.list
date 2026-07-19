@@ -10,5 +10,7 @@
 DOMAIN-KEYWORD,zerotier
 DOMAIN-KEYWORD,xsus
 DOMAIN-SUFFIX,baidu.com
+DOMAIN-SUFFIX,ddnsto.com
 DOMAIN-KEYWORD,oray
+
 IP-CIDR,10.44.227.0/24,no-resolve
